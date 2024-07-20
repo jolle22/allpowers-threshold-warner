@@ -11,3 +11,8 @@ This can be used to prevent deep discharge of the battery.
 
 2. run __main__.py
     ```python src/__main__.py```
+
+## Development
+use the pyqt5-tools designer to change the ui.
+You can start it with
+    ```pyqt5-tools designer```
