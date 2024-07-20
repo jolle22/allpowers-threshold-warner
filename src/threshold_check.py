@@ -3,6 +3,7 @@ import logging
 import easygui
 
 from allpowers_ble import AllpowersBLE
+from device_helper import get_minutes_till_refresh
 from bleak import BleakScanner
 from playsound import playsound
 
@@ -12,8 +13,8 @@ WINDOW_TITLE = "All Powers Battery"
 SOUND_PATH = "resources/info.mp3"
 
 # Configurable attributes
-LOW_BATTERY_WARN_THRESHOLD = 30
-HIGH_BATTERY_WARN_THRESHOLD = 90
+LOW_BATTERY_THRESHOLD = 30
+HIGH_BATTERY_THRESHOLD = 90
 IS_SOUND_ACTIVE = True
 
 
@@ -44,7 +45,6 @@ async def init_allpowers_ble(selected_device):
 
     return allpowers_device
 
-
 async def run() -> None:
     selected_device = await pick_device()
     allpowers_device: AllpowersBLE = await init_allpowers_ble(selected_device)
@@ -60,7 +60,7 @@ async def run() -> None:
 
         _LOGGER.info(status)
 
-        if allpowers_device.percent_remain < LOW_BATTERY_WARN_THRESHOLD:
+        if allpowers_device.percent_remain < LOW_BATTERY_THRESHOLD:
             display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.")
             if allpowers_device.ac_on:
                 await allpowers_device.set_ac(False)
@@ -69,19 +69,15 @@ async def run() -> None:
 
             if allpowers_device.dc_on:
                 await allpowers_device.set_dc(False)
-
-        if allpowers_device.percent_remain > HIGH_BATTERY_WARN_THRESHOLD:
+        
+        if allpowers_device.percent_remain > HIGH_BATTERY_THRESHOLD:
             await display_message_with_sound(
-                "The charge is above " + str(HIGH_BATTERY_WARN_THRESHOLD) + "%.\n" + status)
+                "The charge is above " + str(HIGH_BATTERY_THRESHOLD) + "%.\n" + status)
 
         if allpowers_device.minutes_remain == 0:
             run_loop = False
-
-        minutes_till_refresh = allpowers_device.minutes_remain / 2
-
-        if minutes_till_refresh > 10:
-            # wait at least 10 minutes before checking again
-            minutes_till_refresh = 10
+            
+        minutes_till_refresh = get_minutes_till_refresh(allpowers_device, LOW_BATTERY_THRESHOLD)
 
         _LOGGER.info("minutes till refresh: " + str(minutes_till_refresh))
         await asyncio.sleep(minutes_till_refresh * 60)
