@@ -3,3 +3,4 @@ bleak
 bleak-retry-connector
 easygui
 playsound
+datetime
