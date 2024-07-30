@@ -10,4 +10,4 @@ This can be used to prevent deep discharge of the battery.
     if this fails run ```pip install wheel``` and retry
 
 2. run __main__.py
-    ```python src/__main__.py```
+    ```python src/threshold_check.py```

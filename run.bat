@@ -1,1 +1,1 @@
-python src/__main__.py
+python src/threshold_check.py
