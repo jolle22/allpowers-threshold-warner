@@ -4,3 +4,4 @@ bleak-retry-connector
 easygui
 playsound
 PyQt6
+datetime

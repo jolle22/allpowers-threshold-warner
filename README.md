@@ -10,7 +10,7 @@ This can be used to prevent deep discharge of the battery.
     if this fails run ```pip install wheel``` and retry
 
 2. run __main__.py
-    ```python src/__main__.py```
+    ```python src/threshold_check.py```
 
 ## Development
 use the pyqt5-tools designer to change the ui.

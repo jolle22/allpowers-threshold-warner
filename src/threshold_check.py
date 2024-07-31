@@ -2,6 +2,7 @@ import logging
 import easygui
 import sys
 from signal import Signals
+import datetime
 
 from qasync import QEventLoop, QApplication, asyncSlot, asyncio
 from PyQt6.QtCore import pyqtSignal
@@ -61,7 +62,8 @@ async def run() -> None:
         _LOGGER.info(status)
 
         if allpowers_device.percent_remain < LOW_BATTERY_THRESHOLD:
-            display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.", IS_SOUND_ACTIVE)
+            run_loop = False
+            display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.")
             if allpowers_device.ac_on:
                 await allpowers_device.set_ac(False)
                 if allpowers_device.dc_on:
@@ -79,7 +81,7 @@ async def run() -> None:
 
         minutes_till_refresh = get_minutes_till_refresh(allpowers_device, LOW_BATTERY_THRESHOLD)
 
-        _LOGGER.info("minutes till refresh: " + str(minutes_till_refresh))
+        _LOGGER.info("minutes till refresh: " + str(datetime.timedelta(seconds=minutes_till_refresh * 60)))
         await asyncio.sleep(minutes_till_refresh * 60)
 
 
