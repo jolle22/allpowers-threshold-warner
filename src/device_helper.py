@@ -1,5 +1,10 @@
+import playsound
+import easygui
+
 from allpowers_ble import AllpowersBLE
 
+WINDOW_TITLE = "All Powers Battery"
+SOUND_PATH = "resources/info.mp3"
 
 def get_minutes_till_refresh(allpowers_device: AllpowersBLE, low_battery_threshold: int):
     if allpowers_device.percent_remain <= low_battery_threshold:
@@ -20,3 +25,14 @@ def get_minutes_till_refresh(allpowers_device: AllpowersBLE, low_battery_thresho
         minutes_till_refresh = round(minutes_till_refresh, 2)
 
     return minutes_till_refresh
+
+
+
+async def display_message_with_sound(message: str, is_sound_active: bool):
+    # the try catch is a workaround for the 1.3.0 version of playsound
+    if is_sound_active:
+        try:
+            playsound(SOUND_PATH)
+        except:
+            playsound(SOUND_PATH)
+    easygui.msgbox(message, title=WINDOW_TITLE)

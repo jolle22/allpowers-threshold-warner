@@ -4,25 +4,19 @@ import sys
 from signal import Signals
 
 from qasync import QEventLoop, QApplication, asyncSlot, asyncio
-from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import QApplication, QDialog, QListWidget, QListWidgetItem
-from PyQt5.uic import loadUi
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QDialog, QListWidget, QListWidgetItem, QApplication, QPushButton, QVBoxLayout, QTextBrowser
+from PyQt6.uic import loadUi
 from allpowers_ble import AllpowersBLE
-from device_helper import get_minutes_till_refresh
+from device_helper import get_minutes_till_refresh, display_message_with_sound
 from bleak import BleakScanner
-from playsound import playsound
 
 _LOGGER = logging.getLogger(__name__)
-
-WINDOW_TITLE = "All Powers Battery"
-SOUND_PATH = "resources/info.mp3"
 
 # Configurable attributes
 LOW_BATTERY_THRESHOLD = 30
 HIGH_BATTERY_THRESHOLD = 90
 IS_SOUND_ACTIVE = True
-
-
 
 async def get_devices():
     devices = await BleakScanner.discover()
@@ -67,7 +61,7 @@ async def run() -> None:
         _LOGGER.info(status)
 
         if allpowers_device.percent_remain < LOW_BATTERY_THRESHOLD:
-            display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.")
+            display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.", IS_SOUND_ACTIVE)
             if allpowers_device.ac_on:
                 await allpowers_device.set_ac(False)
                 if allpowers_device.dc_on:
@@ -78,7 +72,7 @@ async def run() -> None:
 
         if allpowers_device.percent_remain > HIGH_BATTERY_THRESHOLD:
             await display_message_with_sound(
-                "The charge is above " + str(HIGH_BATTERY_THRESHOLD) + "%.\n" + status)
+                "The charge is above " + str(HIGH_BATTERY_THRESHOLD) + "%.\n" + status, IS_SOUND_ACTIVE)
 
         if allpowers_device.minutes_remain == 0:
             run_loop = False
@@ -88,16 +82,6 @@ async def run() -> None:
         _LOGGER.info("minutes till refresh: " + str(minutes_till_refresh))
         await asyncio.sleep(minutes_till_refresh * 60)
 
-
-async def display_message_with_sound(message: str):
-    # the try catch is a workaround for the 1.3.0 version of playsound
-    if IS_SOUND_ACTIVE:
-        try:
-            playsound(SOUND_PATH)
-        except:
-            playsound(SOUND_PATH)
-
-    easygui.msgbox(message, title=WINDOW_TITLE)
 
 class QTextBrowserLogger(logging.Handler):
     def __init__(self, logBrowser):

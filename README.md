@@ -16,3 +16,4 @@ This can be used to prevent deep discharge of the battery.
 use the pyqt5-tools designer to change the ui.
 You can start it with
     ```pyqt5-tools designer```
+    
