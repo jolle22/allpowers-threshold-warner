@@ -61,7 +61,7 @@ async def run() -> None:
 
         _LOGGER.info(status)
 
-        if allpowers_device.percent_remain < LOW_BATTERY_THRESHOLD:
+        if allpowers_device.percent_remain <= LOW_BATTERY_THRESHOLD:
             run_loop = False
             display_message_with_sound(status + "\nPower will be shut off. Please charge the AllPowers Battery.")
             if allpowers_device.ac_on:
