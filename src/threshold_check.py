@@ -23,7 +23,13 @@ async def pick_device():
     text = ("Select the All Powers bluetooth device.\n"
             "Their address usually starts with '2A:'."
             "Their name can be similar to 'AP S300 V2.0' or 'None'")
-    devices = await BleakScanner.discover()
+    try:
+        devices = await BleakScanner.discover()
+    except OSError as error:
+        _LOGGER.error("Make sure Bluetooth is turned on. On this device and on the power station.")
+        raise error 
+
+
     devices.sort(key=lambda x: x.address, reverse=False)
     output = easygui.choicebox(text, WINDOW_TITLE, devices)
 
