@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from device_helper import get_minutes_till_refresh
+from device_helper import get_minutes_till_refresh, calc_runtime
 
 class TestGetMinutesTillRefresh(unittest.TestCase):
 
@@ -36,6 +36,24 @@ class TestGetMinutesTillRefresh(unittest.TestCase):
         self.allpowers_device.minutes_remain = 40
         result = get_minutes_till_refresh(self.allpowers_device, 20)
         self.assertEqual(result, 0)
+
+class TestCalcRuntime(unittest.TestCase):
+
+    def setUp(self):
+        self.allpowers_device = Mock(spec=['percent_remain'])
+
+    def test_battery_below_threshold(self):
+        self.allpowers_device.percent_remain = 10
+        self.allpowers_device.watts_export = 100
+        # setup
+        result = calc_runtime(self.allpowers_device)
+        ## make 10 seconds pass... Maybe refactor the mehtod so the date is put in...
+        # test
+        self.allpowers_device.percent_remain = 10
+        self.allpowers_device.watts_export = 100
+        result = calc_runtime(self.allpowers_device)
+        self.assertEqual(result, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
