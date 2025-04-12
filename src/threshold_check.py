@@ -4,7 +4,7 @@ import easygui
 import datetime
 
 from allpowers_ble import AllpowersBLE
-from device_helper import get_minutes_till_refresh, calc_runtime, find_device_index_by_string, find_device_index_by_mac
+from device_helper import get_minutes_till_refresh, find_device_index_by_string, find_device_index_by_mac
 from bleak import BleakScanner
 
 _LOGGER = logging.getLogger(__name__)
@@ -12,11 +12,10 @@ _LOGGER = logging.getLogger(__name__)
 WINDOW_TITLE = "All Powers Battery"
 
 # Configurable attributes
-MINUTES_TO_CHECK_AFTER = 0.04
+MINUTES_TO_CHECK_AFTER = 0.2
 LOW_BATTERY_THRESHOLD = 30
 HIGH_BATTERY_THRESHOLD = 190
 DEFAULT_DEVICE_MAX_ADDRESS = "2A:02:01:61:67:E0"
-IS_CALC_RUNTIME = True
 
 async def pick_device():
     text = ("Select the All Powers bluetooth device.\n"
@@ -86,9 +85,6 @@ async def run() -> None:
             run_loop = False
 
         minutes_till_refresh = get_minutes_till_refresh(allpowers_device, LOW_BATTERY_THRESHOLD, MINUTES_TO_CHECK_AFTER)
-
-        if IS_CALC_RUNTIME:
-            calc_runtime(allpowers_device)
 
         _LOGGER.info("minutes till refresh: " + str(datetime.timedelta(seconds=minutes_till_refresh * 60)))
         await asyncio.sleep(minutes_till_refresh * 60)
