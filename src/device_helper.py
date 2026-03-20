@@ -1,34 +1,113 @@
+from typing import Callable, Iterable, Any, Optional
 from allpowers_ble import AllpowersBLE
 
-def get_minutes_till_refresh(allpowers_device: AllpowersBLE, low_battery_threshold: int, minutes_to_check_after: float):
-    if allpowers_device.percent_remain <= low_battery_threshold:
-        return 0
 
-    minutes_per_percent = allpowers_device.minutes_remain / allpowers_device.percent_remain
-    minutes_of_min_threshold = minutes_per_percent * low_battery_threshold
-    minutes_till_min_threshold = allpowers_device.minutes_remain - minutes_of_min_threshold
-    minutes_till_refresh = minutes_till_min_threshold / 3
+# ----------------------------
+# Refresh Calculation
+# ----------------------------
+class RefreshCalculator:
+    @staticmethod
+    def minutes_until_refresh(
+        device: AllpowersBLE,
+        low_battery_threshold: int,
+        max_interval_minutes: float,
+    ) -> float:
+        """
+        Calculate how long to wait before the next refresh.
 
-    if minutes_till_refresh > minutes_to_check_after:
-        # wait at most 10 minutes before checking again
-        minutes_till_refresh = minutes_to_check_after
-    elif minutes_till_refresh < min(1, minutes_to_check_after):
-        # wait at least 1 minute before checking again
-        minutes_till_refresh = min(1, minutes_to_check_after)
-    else:
-        minutes_till_refresh = round(minutes_till_refresh, 2)
+        Rules:
+        - Immediate refresh if below threshold
+        - Dynamically calculate based on discharge rate
+        - Clamp between sensible bounds
+        """
 
-    return minutes_till_refresh
+        percent = device.percent_remain
+        minutes_remaining = device.minutes_remain
 
-def find_device_index_by_lambda(devices, device_id, compare_fn):
-    index = -1
-    for d in devices:
-        if compare_fn(d, device_id):
-            index = devices.index(d)
-    return index
+        # Guard against invalid values
+        if percent <= 0 or minutes_remaining <= 0:
+            return 0
+
+        if percent <= low_battery_threshold:
+            return 0
+
+        minutes_per_percent = minutes_remaining / percent
+        minutes_to_threshold = minutes_remaining - (
+            minutes_per_percent * low_battery_threshold
+        )
+
+        # Check 5 times before hitting threshold
+        interval = minutes_to_threshold / 5
+
+        return RefreshCalculator._clamp_interval(interval, max_interval_minutes)
+
+    @staticmethod
+    def _clamp_interval(interval: float, max_interval: float) -> float:
+        min_interval = min(1, max_interval)
+
+        if interval > max_interval:
+            return max_interval
+
+        if interval < min_interval:
+            return min_interval
+
+        return round(interval, 2)
+
+
+# ----------------------------
+# Device Lookup Utilities
+# ----------------------------
+class DeviceFinder:
+    @staticmethod
+    def find_index(
+        devices: Iterable[Any],
+        value: Any,
+        comparator: Callable[[Any, Any], bool],
+    ) -> int:
+        """
+        Generic finder with custom comparison logic.
+        Returns -1 if not found.
+        """
+        for index, device in enumerate(devices):
+            if comparator(device, value):
+                return index
+        return -1
+
+    @staticmethod
+    def by_string(devices: Iterable[Any], output: str) -> int:
+        return DeviceFinder.find_index(
+            devices,
+            output,
+            lambda d, s: str(d) == s,
+        )
+
+    @staticmethod
+    def by_mac(devices: Iterable[Any], address: str) -> int:
+        return DeviceFinder.find_index(
+            devices,
+            address,
+            lambda d, s: getattr(d, "address", None) == s,
+        )
+
+
+# ----------------------------
+# Backward-Compatible Functions
+# ----------------------------
+def get_minutes_till_refresh(
+    device: AllpowersBLE,
+    low_battery_threshold: int,
+    minutes_to_check_after: float,
+) -> float:
+    return RefreshCalculator.minutes_until_refresh(
+        device,
+        low_battery_threshold,
+        minutes_to_check_after,
+    )
+
 
 def find_device_index_by_string(devices, output):
-    return find_device_index_by_lambda(devices, output, lambda d, s: str(d) == s)
+    return DeviceFinder.by_string(devices, output)
+
 
 def find_device_index_by_mac(devices, address):
-    return find_device_index_by_lambda(devices, address, lambda d, s: d.address == s)
+    return DeviceFinder.by_mac(devices, address)
