@@ -133,7 +133,7 @@ class BatteryMonitor:
             if self.watts_usage.counts_total
             else 0.0
         )
-        elapsed = (datetime.now() - self.watts_usage.start_time).total_seconds() / 3600.0
+        elapsed = (datetime.datetime.now() - self.watts_usage.start_time).total_seconds() / 3600.0
         return mean_watts * elapsed
         
 
